@@ -12,6 +12,7 @@ import com.bumptech.glide.Glide;
 import com.example.restaurantreview.adapter.ReviewAdapter;
 import com.example.restaurantreview.databinding.ActivityMainBinding;
 import com.example.restaurantreview.response.CustomerReviewsItem;
+import com.example.restaurantreview.response.PostReviewResponse;
 import com.example.restaurantreview.response.Restaurant;
 import com.example.restaurantreview.response.RestaurantResponse;
 
@@ -42,6 +43,38 @@ public class MainActivity extends AppCompatActivity {
         binding.rvReview.addItemDecoration(itemDecoration);
 
         findRestaurant();
+
+        binding.btnSend.setOnClickListener(v -> {
+            if (binding.edReview.getText() != null) {
+                postReview(binding.edReview.getText().toString());
+            }
+        });
+    }
+
+    private void postReview(String review) {
+        showLoading(true);
+        Call<PostReviewResponse> client = ApiConfig.getApiService().postReview(RESTAURANT_ID, "CodingBeruang", review);
+        client.enqueue(new Callback<PostReviewResponse>() {
+            @Override
+            public void onResponse(Call<PostReviewResponse> call, Response<PostReviewResponse> response) {
+                showLoading(false);
+                if (response.isSuccessful()) {
+                    if (response.body() != null) {
+                        setReviewData(response.body().getCustomerReviews());
+                    }
+                } else {
+                    if (response.body() != null) {
+                        Log.e(TAG, "onFailure: " + response.body().getMessage());
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<PostReviewResponse> call, Throwable t) {
+                showLoading(false);
+                Log.e(TAG, "onFailure" + t.getMessage());
+            }
+        });
     }
 
     private void findRestaurant() {
